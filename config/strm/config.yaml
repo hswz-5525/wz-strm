@@ -30,4 +30,3 @@ manual_settings:
   source_path: ''
   target_path: ''
 mount_root: /mnt/nas
-version: 1.0.0

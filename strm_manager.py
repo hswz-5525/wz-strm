@@ -9,6 +9,7 @@ from typing import List, Dict, Optional
 from flask import Blueprint, render_template, request, jsonify, session, current_app, Response, stream_with_context
 import time
 from wanzitools import socketio  # 从主应用导入 socketio 实例
+from version import VERSION
 
 # 创建蓝图
 strm_bp = Blueprint('strm', __name__)
@@ -398,7 +399,7 @@ class STRMManager:
         if not url:
             return url
         
-        # 如果URL以挂载根目录开头则去除该部分
+        # 如果URL以挂载根目录开���，去除该部分
         if url.startswith(self.mount_root):
             url = url[len(self.mount_root):]
             
@@ -411,10 +412,10 @@ class STRMManager:
     def get_version(self) -> str:
         """获取软件版本号"""
         try:
-            return self.config.get('version', '1.0.0')
+            return VERSION
         except Exception as e:
             logging.error(f"获取版本号失败: {e}")
-            return '1.0.0'
+            return VERSION
 
 # 添加进度跟踪字典
 conversion_progress = {}
@@ -473,7 +474,7 @@ def get_config():
 
 @strm_bp.route('/convert/', methods=['POST'])
 def convert():
-    """转换文���为STRM"""
+    """转换文件为STRM"""
     try:
         data = request.get_json()
         if not data:
@@ -482,181 +483,148 @@ def convert():
                 'message': '无效的请求数据'
             }), 400
 
-        task_id = str(int(time.time()))
-
-        # 获取STRM管理器实例
-        strm_manager = STRMManager()
+        # 统一获取间隔时间
+        interval = float(data.get('generate_interval') or data.get('interval') or 0)
         
-        # 保存原始路径
+        task_id = str(int(time.time()))
+        
+        # 在这里定义路径变量
         original_source_path = data['source_path']
         original_output_path = data['output_path']
         
-        # 处理source_path和output_path，去除挂载根目录部分
-        if 'source_path' in data:
-            data['source_path'] = strm_manager.process_url(data['source_path'])
-            
-        if 'output_path' in data:
-            data['output_path'] = strm_manager.process_url(data['output_path'])
-
-        # 获取所有视频文件（使用原始source_path）
-        video_files = []
-        for root, _, files in os.walk(original_source_path):
-            for file in files:
-                if file.lower().endswith(('.mp4', '.mkv', '.avi', '.mov')):
-                    video_files.append(os.path.normpath(os.path.join(root, file)))
-
-        total_files = len(video_files)
-        if total_files == 0:
-            return jsonify({
-                'status': 'error',
-                'message': '未找到视频文件'
-            })
-
-        # 更新总件数
+        # 初始化进度信息
         conversion_progress[task_id] = {
             'status': 'in_progress',
-            'total_files': total_files,
-            'message': f'找到 {total_files} 个视频文件',
+            'total_files': 0,  # 不再预先计算总文件数
             'processed_files': 0,
-            'progress': 0  # 初始进度为0
+            'message': '开始处理...',
+            'progress': 0
         }
 
-        def generate():
-            nonlocal task_id
-            processed_files = 0
-            
-            # 发送初始状态
-            yield f"data: {json.dumps(conversion_progress[task_id], ensure_ascii=False)}\n\n"
-            
+        def process_directory(directory):
+            """递归处理目录"""
             try:
-                for video_file in video_files:
-                    # 更新当前处理文件
-                    rel_path = os.path.relpath(video_file, original_source_path)
-                    
-                    # 发送开始处理文件的进度更新
-                    progress = round((processed_files / total_files) * 100, 2)
-                    conversion_progress[task_id].update({
-                        'status': 'processing',
-                        'progress': progress,
-                        'current_file': rel_path,
-                        'processed_files': processed_files,
-                        'total_files': total_files,
-                        'message': f'开始处理: {rel_path} ({processed_files + 1}/{total_files})',
-                        'completed_file': None
-                    })
-                    yield f"data: {json.dumps(conversion_progress[task_id], ensure_ascii=False)}\n\n"
+                # 添加处理间隔 - 访问目录前
+                if interval > 0:
+                    time.sleep(interval)
 
-                    # 创建STRM文件
-                    rel_path_no_ext = os.path.splitext(rel_path)[0]
-                    strm_path = os.path.join(original_output_path, f"{rel_path_no_ext}.strm")
-                    
-                    # 确保STRM文件的目录存在
-                    os.makedirs(os.path.dirname(strm_path), exist_ok=True)
-                    
-                    # 处理视频文件路径
-                    if data.get('mount_mode') == 'mount' and data.get('mount_root'):
-                        # 标准化路径
-                        video_file = os.path.normpath(video_file)
-                        mount_root = os.path.normpath(data['mount_root'])
-                        
-                        # 检查文件是否在挂载根目录下
-                        if os.path.commonpath([video_file]) == os.path.commonpath([mount_root]):
-                            video_path = os.path.relpath(video_file, mount_root)
-                        else:
-                            video_path = os.path.relpath(video_file, original_source_path)
-                    else:
-                        # 根不同的挂载模式处理路径
-                        if data.get('mount_mode') in ['alist-xiaoya', 'webdav']:
-                            # 对于小雅模式和webdav模式，使用相对路径，去除挂载目录部分
-                            mount_root = os.path.normpath(data.get('mount_root', '/mnt/nas'))
-                            video_file = os.path.normpath(video_file)
-                            if video_file.startswith(mount_root):
-                                video_path = os.path.relpath(video_file, mount_root)
-                            else:
-                                video_path = os.path.relpath(video_file, original_source_path)
-                            # 确保路径使用正斜杠且以正斜杠开始
-                            video_path = '/' + video_path.replace(os.sep, '/')
-                        elif data.get('mount_mode') == 'alist':
-                            # 对于alist模式，移除挂载根目录部分
-                            video_path = os.path.relpath(video_file, original_source_path)
-                        else:
-                            # 默认使用相对路径
-                            video_path = os.path.relpath(video_file, original_source_path)
+                try:
+                    # 获取目录内容并转换为列表
+                    items = list(os.scandir(directory))
+                except Exception as e:
+                    logging.error(f"读取目录 {directory} 失败: {e}")
+                    yield f"data: {json.dumps({'status': 'error', 'message': f'读取目录失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+                    return
 
-                    # 构建URL
-                    if data.get('mount_mode') == 'mount':
-                        url = f"file://{os.path.join(data.get('mount_root', ''), video_path)}"
-                    else:
-                        # 服务器地址，确保以 http:// 或 https:// 开头
-                        server = data.get('server', '').strip()
-                        if not server.startswith(('http://', 'https://')):
-                            server = f"http://{server}"
-                        server = server.rstrip('/')  # 移除末尾的斜杠
+                for item in items:
+                    try:
+                        # 添加处理间隔 - 每次访问文件或目录前
+                        if interval > 0:
+                            time.sleep(interval)
 
-                        # 根据挂载模式获取URL前缀
-                        if data.get('mount_mode') == 'alist-xiaoya':
-                            url_prefix = '/d'
-                        elif data.get('mount_mode') == 'alist':
-                            url_prefix = '/dav'
-                            # 处理 alist 认证信息
-                            if data.get('alist_username') and data.get('alist_password'):
-                                # 从服务器地址中提取协议和剩余部分
-                                protocol = 'https://' if server.startswith('https://') else 'http://'
-                                server_part = server.replace('http://', '').replace('https://', '')
-                                # 重新构建带认证信息的服务器地址
-                                server = f"{protocol}{data.get('alist_username')}:{data.get('alist_password')}@{server_part}"
-                        else:
-                            url_prefix = data.get('url_prefix', '').strip()
+                        try:
+                            is_file = item.is_file()
+                            is_dir = item.is_dir()
+                        except Exception as e:
+                            logging.error(f"检查文件类型失败 {item.path}: {e}")
+                            continue
 
-                        if url_prefix and not url_prefix.startswith('/'):
-                            url_prefix = '/' + url_prefix
-                        url_prefix = url_prefix.rstrip('/')
+                        if is_file:
+                            if item.name.lower().endswith(('.mp4', '.mkv', '.avi', '.mov')):
+                                # 处理视频文件
+                                rel_path = os.path.relpath(item.path, original_source_path)
+                                
+                                # 更新进度信息
+                                conversion_progress[task_id].update({
+                                    'status': 'processing',
+                                    'current_file': rel_path,
+                                    'processed_files': conversion_progress[task_id]['processed_files'],
+                                    'message': f'���在处理: {rel_path}',
+                                })
+                                yield f"data: {json.dumps(conversion_progress[task_id], ensure_ascii=False)}\n\n"
 
-                        # 处理视频路径，移除挂载根目录部分
-                        mount_root = os.path.normpath(data.get('mount_root', '/mnt/nas'))
-                        video_file = os.path.normpath(video_file)
-                        if video_file.startswith(mount_root):
-                            video_path = os.path.relpath(video_file, mount_root)
-                        else:
-                            video_path = os.path.relpath(video_file, original_source_path)
-                        
-                        # 确保路径使用正斜杠且以正斜杠开始
-                        video_path = '/' + video_path.replace(os.sep, '/')
+                                # 添加处理间隔
+                                if interval > 0:
+                                    time.sleep(interval)
 
-                        # 构建完整URL
-                        url = f"{server}{url_prefix}{video_path}"
+                                # 创建STRM文件
+                                rel_path_no_ext = os.path.splitext(rel_path)[0]
+                                strm_path = os.path.join(original_output_path, f"{rel_path_no_ext}.strm")
+                                
+                                # 确保STRM文件的目录存在
+                                os.makedirs(os.path.dirname(strm_path), exist_ok=True)
 
-                    # 写入STRM文件
-                    with open(strm_path, 'w', encoding='utf-8') as f:
-                        f.write(url)
+                                # 构建URL
+                                if data.get('mount_mode') == 'mount':
+                                    url = f"file://{os.path.join(data.get('mount_root', ''), rel_path)}"
+                                else:
+                                    # 服务器地址处理
+                                    server = data.get('server', '').strip()
+                                    if not server.startswith(('http://', 'https://')):
+                                        server = f"http://{server}"
+                                    server = server.rstrip('/')
 
-                    # 更新处理进度
-                    processed_files += 1
-                    current_progress = round((processed_files / total_files) * 100, 2)
-                    conversion_progress[task_id].update({
-                        'status': 'processing',
-                        'progress': current_progress,
-                        'processed_files': processed_files,
-                        'total_files': total_files,
-                        'message': f'已完成: {rel_path} ({processed_files}/{total_files})',
-                        'completed_file': rel_path
-                    })
-                    yield f"data: {json.dumps(conversion_progress[task_id], ensure_ascii=False)}\n\n"
+                                    # URL前缀处理
+                                    if data.get('mount_mode') == 'alist-xiaoya':
+                                        url_prefix = '/d'
+                                    elif data.get('mount_mode') == 'alist':
+                                        url_prefix = '/dav'
+                                        if data.get('alist_username') and data.get('alist_password'):
+                                            protocol = 'https://' if server.startswith('https://') else 'http://'
+                                            server_part = server.replace('http://', '').replace('https://', '')
+                                            server = f"{protocol}{data.get('alist_username')}:{data.get('alist_password')}@{server_part}"
+                                    else:
+                                        url_prefix = data.get('url_prefix', '').strip()
 
-                    # 添加处理间隔
-                    if 'generate_interval' in data:
-                        time.sleep(data.get('generate_interval', 0))
-                    else:
-                        time.sleep(data.get('interval', 0))
+                                    if url_prefix and not url_prefix.startswith('/'):
+                                        url_prefix = '/' + url_prefix
+                                    url_prefix = url_prefix.rstrip('/')
 
-                # 更新完成状态
+                                    # 路径处理
+                                    mount_root = os.path.normpath(data.get('mount_root', '/mnt/nas'))
+                                    if item.path.startswith(mount_root):
+                                        video_path = os.path.relpath(item.path, mount_root)
+                                    else:
+                                        video_path = rel_path
+                                    
+                                    video_path = '/' + video_path.replace(os.sep, '/')
+                                    url = f"{server}{url_prefix}{video_path}"
+
+                                # 写入STRM文件
+                                with open(strm_path, 'w', encoding='utf-8') as f:
+                                    f.write(url)
+
+                                # 更新处理进度
+                                conversion_progress[task_id]['processed_files'] += 1
+                                conversion_progress[task_id].update({
+                                    'status': 'processing',
+                                    'message': f'已完成: {rel_path}',
+                                    'completed_file': rel_path
+                                })
+                                yield f"data: {json.dumps(conversion_progress[task_id], ensure_ascii=False)}\n\n"
+
+                        elif is_dir and data.get('recursive', True):
+                            # 递归处理子目录
+                            yield from process_directory(item.path)
+
+                    except Exception as e:
+                        logging.error(f"处理项目 {item.path} 失败: {e}")
+                        continue
+
+            except Exception as e:
+                logging.error(f"处理目录 {directory} 失败: {e}")
+                yield f"data: {json.dumps({'status': 'error', 'message': f'处理目录失败: {str(e)}'}, ensure_ascii=False)}\n\n"
+
+        def generate():
+            try:
+                # 处理文件夹
+                yield from process_directory(original_source_path)
+
+                # 完成处理
                 conversion_progress[task_id].update({
                     'status': 'completed',
-                    'progress': 100,
-                    'processed_files': total_files,
-                    'total_files': total_files,
                     'message': '所有文件处理完成',
-                    'completed_file': None
+                    'progress': 100
                 })
                 yield f"data: {json.dumps(conversion_progress[task_id], ensure_ascii=False)}\n\n"
 

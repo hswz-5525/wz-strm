@@ -50,6 +50,23 @@
         .main-content {
             padding: 0 20px;
         }
+
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .version-tag {
+            background-color: #3498db;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
     </style>
     {% block extra_style %}{% endblock %}
 </head>
@@ -59,7 +76,9 @@
             <i class="fas fa-home"></i>
             <span>返回首页</span>
         </a>
-        <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+        <div class="title-container">
+            <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+        </div>
     </div>
 
     <div class="main-content">

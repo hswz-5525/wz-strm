@@ -71,7 +71,9 @@ def index():
             'description': '管理STRM文件，支持生成、更新和删除操作'
         }
     ]
-    return render_template('home.html', modules=modules)
+    # 从 version.py 导入版本号
+    from version import VERSION
+    return render_template('home.html', modules=modules, version=VERSION)
 
 # 添加静态文件调试信息
 @app.before_request

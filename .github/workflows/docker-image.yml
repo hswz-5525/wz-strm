@@ -9,8 +9,8 @@ on:
 
 env:
   # 设置 Docker Hub 仓库名称
-  DOCKER_HUB_REPO: hswz/wz-strm  # 替换为你的 Docker Hub 用户名和仓库名
-  VERSION: 1.0.0  # 设置默认版本号
+  DOCKER_HUB_REPO: hswz/wz-strm
+  VERSION: ${{ github.event.ref && github.event.ref != 'refs/heads/main' && github.event.ref != 'refs/heads/master' ? github.event.ref : 'latest' }}
 
 jobs:
   build-and-push:
@@ -20,10 +20,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
-    - name: Get version from git tag
-      if: startsWith(github.ref, 'refs/tags/')
+    - name: Get version from version.py
       run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
+        VERSION=$(python -c "from version import VERSION; print(VERSION)")
         echo "VERSION=$VERSION" >> $GITHUB_ENV
       
     - name: Set up QEMU
