@@ -1,0 +1,13 @@
+logs/
+.git/
+__pycache__/
+*.pyc
+venv/
+.env
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+# 不要忽略模板和静态文件
+!templates/
+!static/

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wz-strm - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        /* 页面头部样式 */
+        .base-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin: 20px;
+            position: relative;
+            gap: 20px;
+        }
+        
+        .home-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background-color: #2ecc71;
+            color: white !important;
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .home-btn:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .home-btn i {
+            font-size: 1.1em;
+        }
+
+        .page-title {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.2em;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        /* 主内容区域样式 */
+        .main-content {
+            padding: 0 20px;
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body>
+    <div class="base-header">
+        <a href="/" class="home-btn">
+            <i class="fas fa-home"></i>
+            <span>返回首页</span>
+        </a>
+        <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+    </div>
+
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

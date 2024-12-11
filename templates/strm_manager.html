@@ -1,0 +1,1264 @@
+{% extends "base.html" %}
+
+{% block title %}STRM生成器{% endblock %}
+
+{% block extra_style %}
+<style>
+    .strm-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* 标签页样式 */
+    .tab-container {
+        margin-bottom: 20px;
+    }
+
+    .tab-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: #f8f9fa;
+        color: #666;
+    }
+
+    .tab-btn.active {
+        background: #3498db;
+        color: white;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    /* 配置表单样式 */
+    .config-section {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        font-size: 1.2em;
+        font-weight: 500;
+        margin-bottom: 15px;
+        color: #2c3e50;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        color: #666;
+    }
+
+    .path-input-group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+        flex: 1;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    /* 开关样式 */
+    .switch-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: #2ecc71;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+
+    /* 按钮样式 */
+    .btn {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: white;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .btn-primary {
+        background-color: #3498db;
+    }
+
+    .btn-success {
+        background-color: #2ecc71;
+    }
+
+    .btn-danger {
+        background-color: #e74c3c;
+    }
+
+    /* 文件列表样式 */
+    .file-list {
+        margin-top: 20px;
+    }
+
+    .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin-bottom: 5px;
+    }
+
+    .file-name {
+        flex: 1;
+    }
+
+    .file-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* 目录对话框样式 */
+    .directory-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .dialog-content {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 600px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .current-path {
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        word-break: break-all;
+    }
+
+    .directory-list {
+        overflow-y: auto;
+        max-height: 50vh;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .directory-item {
+        padding: 8px 15px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .directory-item:hover {
+        background: #f8f9fa;
+    }
+
+    .dialog-footer {
+        margin-top: 15px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .form-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .save-btn {
+        background-color: #2ecc71;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s;
+    }
+
+    .save-btn:hover {
+        background-color: #27ae60;
+    }
+
+    .save-btn i {
+        font-size: 1.1em;
+    }
+
+    .form-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .save-btn {
+        background-color: #2ecc71;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s;
+    }
+
+    .save-btn:hover {
+        background-color: #27ae60;
+    }
+
+    .save-btn i {
+        font-size: 1.1em;
+    }
+
+    .generate-btn {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s;
+    }
+
+    .generate-btn:hover {
+        background-color: #2980b9;
+    }
+
+    .generate-btn i {
+        font-size: 1.1em;
+    }
+
+    /* 保留对话框特定的样式 */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        margin-bottom: 30px;
+        width: 100%;
+        text-align: center;
+    }
+
+    .modal-header h3 {
+        font-size: 24px;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .progress-container {
+        width: 100%;
+        margin: 0 0 25px 0;
+        padding: 20px;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        background-color: #f8f9fa;
+    }
+
+    .progress-info {
+        margin-bottom: 15px;
+    }
+
+    .progress-status {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .progress-detail {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.4;
+    }
+
+    .progress-bar {
+        height: 12px;
+        background-color: #edf2f7;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-top: 15px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4CAF50, #45a049);
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+
+    .processed-files {
+        width: 100%;
+        margin: 0 0 25px 0;
+        padding: 20px;
+        background: #f8f9fa;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+    }
+
+    .processed-count {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .processed-count span {
+        color: #3498db;
+    }
+
+    .current-file {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.4;
+        word-break: break-all;
+        padding: 8px 0;
+    }
+
+    .confirm-btn {
+        margin-top: 10px;
+        background-color: #2ecc71;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .confirm-btn:hover {
+        background-color: #27ae60;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .confirm-btn:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
+    /* 添加日志显示样式 */
+    .log-container {
+        width: 100%;
+        height: 300px;
+        margin: 0 0 25px 0;
+        padding: 20px;
+        background: #1e1e1e;
+        border-radius: 12px;
+        overflow-y: auto;
+    }
+
+    .log-content {
+        font-family: 'Consolas', monospace;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #d4d4d4;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .log-entry {
+        margin: 4px 0;
+        padding: 4px 8px;
+        border-radius: 4px;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .log-entry.success {
+        color: #4caf50;
+    }
+
+    .log-entry.error {
+        color: #f44336;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="strm-container">
+    <!-- 标签页按钮 -->
+    <div class="tab-buttons">
+        <button class="tab-btn active" onclick="switchTab('auto')" data-tab="auto">自动生成</button>
+        <button class="tab-btn" onclick="switchTab('manual')" data-tab="manual">手动生成</button>
+    </div>
+
+    <!-- 自动生成设置 -->
+    <div id="auto-tab" class="tab-content active">
+        <div class="config-section">
+            <div class="section-title">自动生成设置</div>
+            
+            <!-- 启用开关 -->
+            <div class="form-group">
+                <label>启用自动生成</label>
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="auto-enable">
+                        <span class="slider"></span>
+                    </label>
+                    <span>启用</span>
+                </div>
+            </div>
+
+            <!-- 挂载模式选择 -->
+            <div class="form-group">
+                <label>挂载模式</label>
+                <select id="auto-mount-mode" onchange="updateMountMode(this.value, 'auto')">
+                    <option value="alist-xiaoya">Alist-小雅</option>
+                    <option value="alist">AList网盘</option>
+                    <option value="webdav">WebDAV</option>
+                </select>
+                <small style="color: #666;">选择文件系统的挂载模式</small>
+            </div>
+
+            <!-- 服务器配置 -->
+            <div class="form-group">
+                <label>服务器地址</label>
+                <div class="path-input-group">
+                    <input type="text" 
+                           id="auto-server-url" 
+                           placeholder="例如: http://172.16.2.182:5678"
+                           value="">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>URL前缀</label>
+                <div class="path-input-group">
+                    <input type="text" 
+                           id="auto-url-prefix" 
+                           placeholder="例如: /d"
+                           value="">
+                    <small style="color: #666;">可选，不需要前缀可留空</small>
+                </div>
+            </div>
+
+            <!-- 源文件目录 -->
+            <div class="form-group">
+                <label>源文件目录</label>
+                <div class="path-input-group">
+                    <input type="text" id="auto-source-path" placeholder="输入源文件目录路径" value="">
+                    <button onclick="openDirectoryDialog('auto-source')" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> 浏览
+                    </button>
+                </div>
+            </div>
+
+            <!-- STRM保存目录 -->
+            <div class="form-group">
+                <label>STRM保存目录</label>
+                <div class="path-input-group">
+                    <input type="text" id="auto-target-path" placeholder="输入STRM文件保存目录" value="">
+                    <button onclick="openDirectoryDialog('auto-target')" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> 浏览
+                    </button>
+                </div>
+            </div>
+
+            <!-- 递归处理 -->
+            <div class="form-group">
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="auto-recursive" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span>递归处理子目录</span>
+                </div>
+            </div>
+
+            <!-- 扫描间隔 -->
+            <div class="form-group">
+                <label>扫描间隔（秒）</label>
+                <input type="number" id="auto-interval" value="3600" min="60">
+                <small style="color: #666;">最小60秒</small>
+            </div>
+
+            <!-- 生成间隔 -->
+            <div class="form-group">
+                <label>生成间隔（秒）</label>
+                <input type="number" id="auto-generate-interval" value="1" min="0">
+                <small style="color: #666;">每个文件生成的间隔时间</small>
+            </div>
+
+            <!-- 挂载根目录 -->
+            <div class="form-group">
+                <label>挂载根目录</label>
+                <div class="path-input-group">
+                    <input type="text" 
+                           id="auto-mount-root" 
+                           placeholder="例如: /mnt/nas"
+                           value="">
+                    <button onclick="openDirectoryDialog('auto-mount-root')" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> 浏览
+                    </button>
+                </div>
+                <small style="color: #666;">用于URL路径拼接的根目录</small>
+            </div>
+
+            <!-- Alist账户配置 (仅在Alist网盘模式下显示) -->
+            <div id="auto-alist-config" class="form-group" style="display: none;">
+                <label>Alist账户</label>
+                <input type="text" id="auto-alist-username" placeholder="请输入账户">
+                <label>Alist密码</label>
+                <input type="password" id="auto-alist-password" placeholder="请输入密码">
+            </div>
+
+            <!-- 生成按钮 -->
+            <div class="form-buttons">
+                <button onclick="saveAutoSettings()" class="save-btn">
+                    <i class="fas fa-save"></i> 保存设置
+                </button>
+                <button onclick="generateStrm()" class="generate-btn">
+                    <i class="fas fa-play"></i> 生成STRM
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手动生成设置 -->
+    <div id="manual-tab" class="tab-content">
+        <div class="config-section">
+            <div class="section-title">手动生成</div>
+            
+            <!-- 挂载模式选择 -->
+            <div class="form-group">
+                <label>挂载模式</label>
+                <select id="mount-mode" onchange="updateMountMode(this.value)">
+                    <option value="alist-xiaoya">Alist-小雅</option>
+                    <option value="alist">AList网盘</option>
+                    <option value="webdav">WebDAV</option>
+                </select>
+                <small style="color: #666;">选择文件系统的挂载模式</small>
+            </div>
+
+            <!-- 服务器配置 -->
+            <div class="form-group">
+                <label>服务器地址</label>
+                <div class="path-input-group">
+                    <input type="text" 
+                           id="server-url" 
+                           placeholder="例如: http://172.16.2.182:5678"
+                           value="">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>URL前缀</label>
+                <div class="path-input-group">
+                    <input type="text" 
+                           id="url-prefix" 
+                           placeholder="例如: /d"
+                           value="">
+                    <small style="color: #666;">可选，不需要前缀可留空</small>
+                </div>
+            </div>
+
+            <!-- 文件选择 -->
+            <div class="form-group">
+                <label>选择文件或目录</label>
+                <div class="path-input-group">
+                    <input type="text" id="manual-path" placeholder="输入文件或目录路径" value="">
+                    <button onclick="openDirectoryDialog('manual')" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> 浏览
+                    </button>
+                </div>
+            </div>
+
+            <!-- STRM保存目录 -->
+            <div class="form-group">
+                <label>STRM保存目录</label>
+                <div class="path-input-group">
+                    <input type="text" id="manual-target-path" placeholder="输入STRM文件保存目录" value="">
+                    <button onclick="openDirectoryDialog('manual-target')" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> 浏览
+                    </button>
+                </div>
+            </div>
+
+            <!-- 递归处理 -->
+            <div class="form-group">
+                <div class="switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="manual-recursive" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span>递归处理子目录</span>
+                </div>
+            </div>
+
+            <!-- 添加时间间隔设置 -->
+            <div class="form-group">
+                <label>生成间隔（秒）</label>
+                <input type="number" id="manual-interval" value="1" min="0">
+            </div>
+
+            <!-- 挂载根目录 -->
+            <div class="form-group">
+                <label>挂载根目录</label>
+                <div class="path-input-group">
+                    <input type="text" 
+                           id="manual-mount-root" 
+                           placeholder="例如: /mnt/nas"
+                           value="">
+                    <button onclick="openDirectoryDialog('manual-mount-root')" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> 浏览
+                    </button>
+                </div>
+                <small style="color: #666;">用于URL路径拼接的根目录</small>
+            </div>
+
+            <!-- Alist账户配置 (仅在Alist网盘模式下显示) -->
+            <div id="manual-alist-config" class="form-group" style="display: none;">
+                <label>Alist账户</label>
+                <input type="text" id="manual-alist-username" placeholder="请输入账户">
+                <label>Alist密码</label>
+                <input type="password" id="manual-alist-password" placeholder="请输入密码">
+            </div>
+
+            <!-- 生成按钮 -->
+            <div class="form-buttons">
+                <button onclick="generateStrm()" class="generate-btn">
+                    <i class="fas fa-play"></i> 生成STRM
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 进度显示对话框 -->
+<div id="progress-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fas fa-cog fa-spin"></i> 处理进度</h3>
+        </div>
+        <!-- 添加日志显示区域 -->
+        <div class="log-container">
+            <div class="log-content"></div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-info">
+                <div class="progress-status">
+                    <i class="fas fa-sync-alt fa-spin"></i>
+                    正在处理...
+                </div>
+                <div class="progress-detail"></div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+        <button class="confirm-btn" style="display: none;" onclick="closeProgressModal()">
+            <i class="fas fa-check"></i> 确认
+        </button>
+    </div>
+</div>
+
+<script>
+// 全变量
+let currentTab = 'auto';
+
+// 页面载时初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化标签页按钮的data-tab属性
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        if (btn.textContent.includes('自动')) {
+            btn.setAttribute('data-tab', 'auto');
+        } else if (btn.textContent.includes('手动')) {
+            btn.setAttribute('data-tab', 'manual');
+        }
+    });
+
+    // 为生成按钮添加事件监听
+    const generateButton = document.querySelector('.generate-btn');
+    if (generateButton) {
+        generateButton.addEventListener('click', generateStrm);
+    }
+
+    // 设置STRM保存目录默认值
+    const defaultTargetPath = '/mnt/nas/vol1/1000/strms';
+    document.getElementById('auto-target-path').value = defaultTargetPath;
+    document.getElementById('manual-target-path').value = defaultTargetPath;
+
+    // 初始化挂载模式和URL前缀
+    const mountMode = document.getElementById('mount-mode');
+    const autoMountMode = document.getElementById('auto-mount-mode');
+    
+    if (mountMode) {
+        updateMountMode(mountMode.value, 'manual');
+    }
+    
+    if (autoMountMode) {
+        updateMountMode(autoMountMode.value, 'auto');
+    }
+
+    // 从后端传递的settings加载配置
+    const settings = {{ settings|tojson|safe }};
+    if (settings) {
+        document.getElementById('auto-enable').checked = settings.enabled || false;
+        document.getElementById('auto-source-path').value = settings.source_path || '';
+        document.getElementById('auto-target-path').value = settings.output_path || '';
+        document.getElementById('auto-server-url').value = settings.server || '';
+        document.getElementById('auto-url-prefix').value = settings.url_prefix || '';
+        document.getElementById('auto-recursive').checked = settings.recursive || false;
+        document.getElementById('auto-interval').value = settings.interval || 3600;
+        document.getElementById('auto-generate-interval').value = settings.generate_interval || 0;
+        document.getElementById('auto-mount-mode').value = settings.mount_mode || 'alist';
+        document.getElementById('auto-mount-root').value = settings.mount_root || '';
+        document.getElementById('auto-alist-username').value = settings.alist_username || '';
+        document.getElementById('auto-alist-password').value = settings.alist_password || '';
+        
+        // 根据挂载模式更新界面
+        updateMountMode(settings.mount_mode || 'alist', 'auto');
+    }
+});
+
+// 切换标签页
+function switchTab(tab) {
+    currentTab = tab;
+    // 更新按钮状态
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-tab') === tab) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // 更新内容显示
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(`${tab}-tab`).classList.add('active');
+}
+
+// 打开目录选择对话框
+async function openDirectoryDialog(type) {
+    try {
+        // 获取当前路径
+        const currentPath = document.getElementById(
+            type === 'manual' ? 'manual-path' : 
+            type === 'manual-target' ? 'manual-target-path' : 
+            type === 'manual-mount-root' ? 'manual-mount-root' :
+            type === 'auto-source' ? 'auto-source-path' :
+            type === 'auto-target' ? 'auto-target-path' :
+            'manual-mount-root').value || '/';
+        
+        // 发送请求获取目录列表
+        const response = await fetch(`/strm/browse/?path=${encodeURIComponent(currentPath)}`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            // 显示目录选择对话框
+            showDirectoryDialog(data.items, data.current_path, type);
+        } else {
+            throw new Error(data.message || '获取目录列表失败');
+        }
+    } catch (error) {
+        console.error('打开目录对话框失败:', error);
+        console.error('Error details:', error.message);
+        console.error('Response:', error.response);
+        alert('打开目录对话框失败: ' + error.message);
+    }
+}
+
+// 显示目录选择对话框
+function showDirectoryDialog(items, currentPath, type) {
+    // 创建对话框元素
+    const dialog = document.createElement('div');
+    dialog.className = 'directory-dialog';
+    dialog.innerHTML = `
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>选择目录</h3>
+                <button class="close-btn" onclick="this.closest('.directory-dialog').remove()">&times;</button>
+            </div>
+            <div class="current-path">${currentPath}</div>
+            <div class="directory-list">
+                ${currentPath !== '/' ? `
+                    <div class="directory-item" data-path="${getParentPath(currentPath)}">
+                        <i class="fas fa-level-up-alt"></i> ..
+                    </div>
+                ` : ''}
+                ${items.map(item => `
+                    <div class="directory-item" data-path="${item.path}">
+                        <i class="fas ${item.type === 'directory' ? 'fa-folder' : 'fa-file'}"></i>
+                        ${item.name}
+                    </div>
+                `).join('')}
+            </div>
+            <div class="dialog-footer">
+                <button class="btn btn-primary" onclick="selectDirectory('${currentPath}', '${type}')">选择当前目录</button>
+                <button class="btn btn-danger" onclick="this.closest('.directory-dialog').remove()">取消</button>
+            </div>
+        </div>
+    `;
+    
+    // 添加点击事件处理
+    dialog.querySelectorAll('.directory-item').forEach(item => {
+        item.addEventListener('click', async () => {
+            const path = item.getAttribute('data-path');
+            // 只处理文件类型的项目
+            const isFile = item.querySelector('.fa-file');
+            if (!isFile) {
+                dialog.remove();
+                const input = document.getElementById(
+                    type === 'manual' ? 'manual-path' : 
+                    type === 'manual-target' ? 'manual-target-path' : 
+                    type === 'manual-mount-root' ? 'manual-mount-root' :
+                    type === 'auto-source' ? 'auto-source-path' :
+                    type === 'auto-target' ? 'auto-target-path' :
+                    'manual-mount-root'
+                );
+                input.value = path;
+                await openDirectoryDialog(type);
+            }
+        });
+    });
+    
+    // 添加到页面
+    document.body.appendChild(dialog);
+}
+
+// 获取父目录路径
+function getParentPath(path) {
+    return path.replace(/\/[^/]*$/, '') || '/';
+}
+
+// 选择目录
+function selectDirectory(path, type) {
+    const input = document.getElementById(
+        type === 'manual' ? 'manual-path' : 
+        type === 'manual-target' ? 'manual-target-path' : 
+        type === 'manual-mount-root' ? 'manual-mount-root' :
+        type === 'auto-source' ? 'auto-source-path' :
+        type === 'auto-target' ? 'auto-target-path' :
+        'manual-mount-root');
+    input.value = path;
+
+    // 如果不是选择挂载根目录，则自动设置挂载根目录
+    if (!type.includes('mount-root')) {
+        // 使用正则表达式匹配到包含IP地址的完整目录路径
+        const mountRootMatch = path.match(/^(.*?\/[^/]*(?:\d{1,3}\.){3}\d{1,3}[^/]*)/);
+        if (mountRootMatch) {
+            // 使用匹配到的完整路径作为挂载根目录
+            const mountRoot = mountRootMatch[1];
+            // 根据当前标签页设置对应的挂载根目录输入框
+            const mountRootInput = document.getElementById(
+                type.startsWith('auto') ? 'auto-mount-root' : 'manual-mount-root'
+            );
+            mountRootInput.value = mountRoot;
+        }
+    }
+
+    document.querySelector('.directory-dialog').remove();
+}
+
+// 创建 SSE 连接函数
+function createEventSource(taskId) {
+    const eventSource = new EventSource(`/strm/progress_stream/${taskId}`);
+
+    eventSource.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        updateProgress(data);
+    };
+
+    eventSource.onerror = function(error) {
+        console.error('SSE Error:', error);
+        eventSource.close();
+    };
+
+    return eventSource;
+}
+
+// 更新进度显示函数
+function updateProgress(data) {
+    const modal = document.getElementById('progress-modal');
+    if (!modal || modal.style.display !== 'flex') {
+        return;
+    }
+
+    const progressStatus = modal.querySelector('.progress-status');
+    const progressDetail = modal.querySelector('.progress-detail');
+    const progressFill = modal.querySelector('.progress-fill');
+    const confirmBtn = modal.querySelector('.confirm-btn');
+    const logContent = modal.querySelector('.log-content');
+
+    if (data.status === 'processing') {
+        progressStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> 正在处理...';
+        progressFill.style.width = `${data.progress}%`;
+        
+        if (data.current_file && !data.completed_file) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] ⏳ 开始处理: ${data.current_file}`;
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+        
+        if (data.completed_file) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry success';
+            logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] ✓ 已完成: ${data.completed_file}`;
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+        
+        progressDetail.textContent = data.message;
+    } else if (data.status === 'completed') {
+        progressStatus.innerHTML = '<i class="fas fa-check-circle"></i> 处理完成';
+        progressFill.style.width = '100%';
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry success';
+        logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] ✓ ${data.message}`;
+        logContent.appendChild(logEntry);
+        logContent.scrollTop = logContent.scrollHeight;
+        confirmBtn.style.display = 'block';
+    } else if (data.status === 'error') {
+        progressStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> 处理失败';
+        progressDetail.textContent = data.message;
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry error';
+        logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] ✗ ${data.message}`;
+        logContent.appendChild(logEntry);
+        logContent.scrollTop = logContent.scrollHeight;
+        confirmBtn.style.display = 'block';
+    }
+}
+
+// 修改生成STRM函数
+async function generateStrm() {
+    try {
+        // 显示加载状态
+        const generateBtn = document.querySelector('.generate-btn');
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 正在生成...';
+
+        // 立即显示进度对话框
+        showProgressModal();
+        const modal = document.getElementById('progress-modal');
+        const progressStatus = modal.querySelector('.progress-status');
+        const progressDetail = modal.querySelector('.progress-detail');
+        const progressFill = modal.querySelector('.progress-fill');
+        const processedCount = modal.querySelector('.processed-count');
+        const currentFile = modal.querySelector('.current-file');
+        
+        // 获取当前配置
+        const config = currentTab === 'auto' ? {
+            source_path: document.getElementById('auto-source-path').value,
+            output_path: document.getElementById('auto-target-path').value,
+            interval: parseInt(document.getElementById('auto-interval').value) || 3600,
+            generate_interval: parseInt(document.getElementById('auto-generate-interval').value) || 0,
+            enabled: document.getElementById('auto-enable').checked,
+            server: document.getElementById('auto-server-url').value,
+            url_prefix: document.getElementById('auto-url-prefix').value,
+            recursive: document.getElementById('auto-recursive').checked,
+            mount_mode: document.getElementById('auto-mount-mode').value,
+            mount_root: document.getElementById('auto-mount-root').value,
+            alist_username: document.getElementById('auto-alist-username').value,
+            alist_password: document.getElementById('auto-alist-password').value
+        } : {
+            source_path: document.getElementById('manual-path').value,
+            output_path: document.getElementById('manual-target-path').value,
+            server: document.getElementById('server-url').value,
+            url_prefix: document.getElementById('url-prefix').value,
+            recursive: document.getElementById('manual-recursive').checked,
+            interval: parseInt(document.getElementById('manual-interval').value) || 0,
+            mount_mode: document.getElementById('mount-mode').value,
+            mount_root: document.getElementById('manual-mount-root').value,
+            alist_username: document.getElementById('manual-alist-username').value,
+            alist_password: document.getElementById('manual-alist-password').value
+        };
+
+        // 验证必填字段
+        if (!config.source_path || !config.output_path) {
+            progressStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> 配置错误';
+            progressDetail.textContent = '请选择源文件路径和输出路径';
+            modal.querySelector('.confirm-btn').style.display = 'block';
+            alert('请选择源文件路径和输出路径');
+            return;
+        }
+
+        // 发送请求到后端
+        const response = await fetch('/strm/convert/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // 处理 SSE 响应
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        while (true) {
+            const {value, done} = await reader.read();
+            if (done) break;
+            
+            const text = decoder.decode(value);
+            const lines = text.split('\n');
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const jsonStr = line.slice(6).trim();
+                        if (jsonStr) {
+                            const data = JSON.parse(jsonStr);
+                            updateProgress(data);
+                        }
+                    } catch (parseError) {
+                        console.error('JSON parse error:', parseError);
+                        console.error('Invalid JSON string:', line.slice(6));
+                    }
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('生成STRM文件失败:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack
+        });
+        const modal = document.getElementById('progress-modal');
+        const progressStatus = modal.querySelector('.progress-status');
+        const progressDetail = modal.querySelector('.progress-detail');
+        progressStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> 处理失败';
+        progressDetail.textContent = error.message;
+        modal.querySelector('.confirm-btn').style.display = 'block';
+        alert('生成STRM文件失败: ' + error.message);
+    } finally {
+        // 恢复按钮状态
+        const generateBtn = document.querySelector('.generate-btn');
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-play"></i> 生成STRM';
+    }
+}
+
+// 更新挂载模式
+function updateMountMode(mode, type = 'manual') {
+    const alistConfig = document.getElementById(`${type}-alist-config`);
+    const urlPrefixInput = document.getElementById(
+        type === 'manual' ? 'url-prefix' : 'auto-url-prefix'
+    );
+    
+    // 根据不同的载模式置默认值显示/隐藏关配置
+    switch(mode) {
+        case 'alist-xiaoya':
+            urlPrefixInput.value = '/d';
+            alistConfig.style.display = 'none';
+            break;
+        case 'alist':
+            urlPrefixInput.value = '/dav';
+            alistConfig.style.display = 'block';
+            break;
+        case 'webdav':
+            urlPrefixInput.value = '';
+            alistConfig.style.display = 'none';
+            break;
+        default:
+            urlPrefixInput.value = '';
+            alistConfig.style.display = 'none';
+    }
+}
+
+// 显示进度对话框
+function showProgressModal() {
+    const modal = document.getElementById('progress-modal');
+    modal.style.display = 'flex';
+    
+    // 重置进度显示
+    modal.querySelector('.progress-fill').style.width = '0%';
+    modal.querySelector('.progress-status').innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> 正在准备...';
+    modal.querySelector('.progress-detail').textContent = '正在收集文件信息...';
+    modal.querySelector('.log-content').innerHTML = '';
+    modal.querySelector('.confirm-btn').style.display = 'none';
+
+    // 添加初始日志
+    const logEntry = document.createElement('div');
+    logEntry.className = 'log-entry';
+    logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] 开始处理...`;
+    modal.querySelector('.log-content').appendChild(logEntry);
+}
+
+// 关闭进度对话框
+function closeProgressModal() {
+    const modal = document.getElementById('progress-modal');
+    modal.style.display = 'none';
+}
+
+// 保存自动生成设置
+function saveAutoSettings() {
+    const config = {
+        enabled: document.getElementById('auto-enable').checked,
+        source_path: document.getElementById('auto-source-path').value,
+        output_path: document.getElementById('auto-target-path').value,
+        server: document.getElementById('auto-server-url').value,
+        url_prefix: document.getElementById('auto-url-prefix').value,
+        recursive: document.getElementById('auto-recursive').checked,
+        interval: parseInt(document.getElementById('auto-interval').value) || 3600,
+        generate_interval: parseInt(document.getElementById('auto-generate-interval').value) || 0,
+        mount_mode: document.getElementById('auto-mount-mode').value,
+        mount_root: document.getElementById('auto-mount-root').value,
+        alist_username: document.getElementById('auto-alist-username').value,
+        alist_password: document.getElementById('auto-alist-password').value
+    };
+
+    fetch('/strm/save_auto_settings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('设置保存成功');
+        } else {
+            alert('保存失败: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('保存失败: ' + error);
+    });
+}
+</script>
+{% endblock %} 

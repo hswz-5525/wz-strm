@@ -1,0 +1,18 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5525:5525"
+    volumes:
+      - /:/mnt/nas
+      - ./config/strm/config.yaml:/app/config/strm/config.yaml
+      - ./logs:/app/logs
+      - ./static:/app/static
+    environment:
+      - NAS_MOUNT_POINT=/mnt/nas
+    restart: unless-stopped
+
+# 服务默认使用5525端口(Flask)
+# 访问地址：http://主机IP:5525
