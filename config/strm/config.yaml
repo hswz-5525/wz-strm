@@ -6,10 +6,10 @@ auto_settings:
   interval: 3600
   mount_mode: alist
   mount_root: ''
-  output_path: 
+  output_path: ''
   recursive: true
   server: http://172.16.2.182:5244
-  source_path: 
+  source_path: ''
   url_prefix: /dav
 default_paths:
   output: /mnt/nas
