@@ -17,6 +17,6 @@ services:
       - NAS_MOUNT_POINT=/mnt/nas  # NAS 挂载点
       - FLASK_ENV=production
     restart: unless-stopped  # 自动重启
-    networks_mode: bridge
+    network_mode: bridge
 
 # 访问地址：http://主机IP:5525 
