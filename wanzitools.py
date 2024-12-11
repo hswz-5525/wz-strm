@@ -73,6 +73,16 @@ def index():
     ]
     return render_template('home.html', modules=modules)
 
+# 添加静态文件调试信息
+@app.before_request
+def debug_static():
+    if app.debug:
+        static_folder = app.static_folder
+        qrcode_path = os.path.join(static_folder, 'images', 'qrcode.jpg')
+        app.logger.debug(f"Static folder: {static_folder}")
+        app.logger.debug(f"QR code path: {qrcode_path}")
+        app.logger.debug(f"QR code exists: {os.path.exists(qrcode_path)}")
+
 if __name__ == '__main__':
     init_app()
     socketio.run(app, host='0.0.0.0', port=5525, debug=True)

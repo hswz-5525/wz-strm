@@ -33,3 +33,9 @@ logs/
 .vscode/
 *.swp
 *.swo 
+
+# 静态文件
+.git/
+.pytest_cache/
+.coverage
+htmlcov/
