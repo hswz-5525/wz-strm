@@ -1,46 +1,33 @@
-# STRM生成器配置
-version: "1.0.0"  # 软件版本号
-
-# 默认路径配置
-default_paths:
-  source: "/mnt/nas"
-  output: "/mnt/nas/strms"
-
-# 挂载配置
-mount_root: "/mnt/nas"
-
-# 自动生成设置
 auto_settings:
-  enabled: false
-  source_path: ""
-  output_path: ""
-  server: ""
-  url_prefix: ""
-  recursive: true
-  interval: 3600
+  alist_password: ''
+  alist_username: ''
+  enabled: true
   generate_interval: 0
-  mount_mode: "alist"
-  mount_root: ""
-  alist_username: ""
-  alist_password: ""
-
-# 手动生成设置
-manual_settings:
-  source_path: ""
-  target_path: ""
+  interval: 3600
+  mount_mode: alist
+  mount_root: ''
+  output_path: 
   recursive: true
-  interval: 0
-  mount_mode: "alist"
-  mount_root: ""
-  alist_username: ""
-  alist_password: ""
-
-# 日志配置
+  server: http://172.16.2.182:5244
+  source_path: 
+  url_prefix: /dav
+default_paths:
+  output: /mnt/nas
+  source: /mnt/nas
+libraries: []
 logging:
-  level: "INFO"
-  file: "logs/strm.log"
-  max_size: 10  # MB
   backup_count: 5
-
-# STRM库配置
-libraries: [] 
+  file: logs/strm.log
+  level: INFO
+  max_size: 10
+manual_settings:
+  alist_password: ''
+  alist_username: ''
+  interval: 0
+  mount_mode: alist
+  mount_root: ''
+  recursive: true
+  source_path: ''
+  target_path: ''
+mount_root: /mnt/nas
+version: 1.0.0
