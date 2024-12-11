@@ -28,11 +28,12 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # 创建必要的目录
-RUN mkdir -p config/strm logs static templates
+RUN mkdir -p config/strm logs static/images templates
 
 # 复制项目文件
 COPY templates templates/
-COPY static static/
+COPY static/ static/
+COPY static/images/qrcode.jpg static/images/
 COPY *.py .
 
 # 暴露端口

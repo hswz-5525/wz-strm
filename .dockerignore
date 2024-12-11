@@ -11,3 +11,5 @@ htmlcov/
 # 不要忽略模板和静态文件
 !templates/
 !static/
+!static/images/
+!static/images/qrcode.jpg

@@ -10,7 +10,9 @@ services:
       # 挂载配置文件和日志目录
       - ./config:/app/config
       - ./logs:/app/logs
-      - ./static:/app/static
+      # 静态文件目录挂载
+      - ./static:/app/static:ro
+      - ./templates:/app/templates:ro
     environment:
       - TZ=Asia/Shanghai  # 设置时区
       - PYTHONUNBUFFERED=1  # Python 不缓冲输出
@@ -19,4 +21,9 @@ services:
     restart: unless-stopped  # 自动重启
     network_mode: bridge
 
+# 使用说明：
+# 1. 首次部署前，确保以下目录和文件存在：
+#    mkdir -p config/strm static/images templates
+#    cp qrcode.jpg static/images/
+#
 # 访问地址：http://主机IP:5525 
