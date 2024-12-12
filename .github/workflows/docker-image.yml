@@ -10,7 +10,8 @@ on:
 env:
   # 设置 Docker Hub 仓库名称
   DOCKER_HUB_REPO: hswz/wz-strm
-  VERSION: ${{ github.event.ref && github.event.ref != 'refs/heads/main' && github.event.ref != 'refs/heads/master' ? github.event.ref : 'latest' }}
+  # 设置版本号
+  VERSION: latest
 
 jobs:
   build-and-push:
