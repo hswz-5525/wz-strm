@@ -1,0 +1,21 @@
+docker compose
+
+services:
+  wz-strm:
+    image: hswz/wz-strm:latest  # 使用 Docker Hub 上的镜像
+    container_name: wz-strm
+    ports:
+      - "5525:5525"  # Web界面端口
+    volumes:
+      # 挂载 NAS 目录
+      - /:/mnt/nas:ro  # 只读模式挂载 NAS 目录
+      # 挂载配置文件和日志目录
+      - ./config:/app/config
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区
+      - PYTHONUNBUFFERED=1  # Python 不缓冲输出
+      - NAS_MOUNT_POINT=/mnt/nas  # NAS 挂载点
+      - FLASK_ENV=production
+    restart: unless-stopped  # 自动重启
+    network_mode: bridge
